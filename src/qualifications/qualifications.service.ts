@@ -15,19 +15,39 @@ export class QualificationsService {
   }
 
   async create(dto: CreateQualificationDto): Promise<Qualification> {
-    const isExist = await this.qualificationRepository.exist({ where: dto });
+    const entity = {
+      name: dto.name,
+      classifier: { id: dto.classifierId },
+    }
+    const isExist = await this.qualificationRepository.exist({
+      where: entity,
+    });
 
     if (isExist) {
       throw new BadRequestException('Такая квалификация уже существует');
     }
 
-    const qualification = await this.qualificationRepository.create(dto);
+    const qualification = await this.qualificationRepository.create(entity);
 
-    return await this.qualificationRepository.save(qualification);
+    return this.qualificationRepository.save(qualification);
   }
 
-  async findAll(): Promise<List<Qualification>> {
-    return `This action returns all qualifications`;
+  async findAll(count: number, page: number): Promise<List<Qualification>> {
+    const [qualifications, total] = await this.qualificationRepository.findAndCount({
+      take: count,
+      skip: count * (page - 1),
+      relations: ['classifier'],
+      order: { id: 'ASC' },
+    });
+
+    return {
+      content: qualifications,
+      props: {
+        currentPage: page,
+        totalPages: Math.ceil(total / count),
+        countItems: total,
+      },
+    };
   }
 
   async findOne(id: number): Promise<Qualification> {
@@ -41,16 +61,17 @@ export class QualificationsService {
   }
 
   async update(id: number, dto: UpdateQualificationDto): Promise<Qualification> {
-    const qualification = await this.findOne(id)
+    const qualification = await this.findOne(id);
 
-
-    return this.qualificationRepository.update({
+    return this.qualificationRepository.save({
       ...qualification,
-      ...dto
-    })
+      ...dto,
+    });
   }
 
-  remove(id: number): Promise<Qualification> {
-    return `This action removes a #${id} qualification`;
+  async remove(id: number): Promise<Qualification> {
+    const qualification = await this.findOne(id);
+
+    return this.qualificationRepository.remove(qualification);
   }
 }

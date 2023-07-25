@@ -1,24 +1,14 @@
-{
-  "type": "postgres",
-  "host": "localhost",
-  "port": 5432,
-  "username": "postgres",
-  "password": "postgres",
-  "database": "test",
-  "synchronize": false,
-  "entities": [
-    "src/**/entities/**/*.ts",
-    "src/entity/**/*.ts"
+import { DB_CONFIG } from './private.config';
+import { ConnectionOptions } from 'typeorm';
+
+const dbConfig: ConnectionOptions = {
+  ...DB_CONFIG,
+  type: 'postgres',
+  entities: ['dist/**/*.entity{.ts,.js}'],
+  migrations: [
+    'src/database/migrations/*.ts',
   ],
-  "migrations": [
-    "database/migrations/**/*.ts"
-  ],
-  "subscribers": [
-    "src/subscriber/**/*.ts"
-  ],
-  "cli": {
-    "entitiesDir": "src/entity",
-    "migrationsDir": "database/migrations",
-    "subscribersDir": "src/subscriber"
-  }
-}
+  synchronize: true,
+};
+
+export default dbConfig;

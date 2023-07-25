@@ -1,6 +1,6 @@
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { BaseEntity } from '../../../entities/base.entity';
-import { Speciality } from './speciality.entity';
+import { Speciality } from '../../specialities/entities/speciality.entity';
 
 export enum EDUCATION_FORMS {
   'full-time', // очная
@@ -12,7 +12,10 @@ export enum EDUCATION_FORMS {
 @Entity()
 export class EducationForm extends BaseEntity {
   @Column({ type: 'enum', enum: EDUCATION_FORMS, unique: true })
-  name: EDUCATION_FORMS;
+  type: EDUCATION_FORMS;
+
+  @Column({ unique: true })
+  name: string;
 
   @ManyToMany(() => Speciality, (speciality) => speciality.forms)
   @JoinTable()

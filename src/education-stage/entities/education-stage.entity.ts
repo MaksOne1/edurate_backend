@@ -1,6 +1,6 @@
 import { BaseEntity } from '../../../entities/base.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
-import { Speciality } from './speciality.entity';
+import { Speciality } from '../../specialities/entities/speciality.entity';
 
 export enum EDUCATION_STAGES {
   'bachelor',
@@ -12,7 +12,10 @@ export enum EDUCATION_STAGES {
 export class EducationStage extends BaseEntity {
 
   @Column({ type: 'enum', enum: EDUCATION_STAGES, unique: true })
-  name: EDUCATION_STAGES;
+  type: EDUCATION_STAGES;
+
+  @Column({ unique: true })
+  name: string;
 
   @OneToMany(() => Speciality, (speciality) => speciality.stage)
   specialities: Speciality[]
