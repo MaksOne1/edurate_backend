@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AccessTokenPayload } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +17,7 @@ export class AuthService {
   async validateUser(email, password) {
     const { password: userPassword, ...user } = await this.usersService.findOneBy({
       where: { email },
-      select: ['id', 'email', 'password', 'isStaff']
+      select: ['id', 'email', 'password', 'role']
     });
 
     const passwordValid = await bcrypt.compare(password, userPassword);
@@ -31,8 +32,8 @@ export class AuthService {
     }
   }
 
-  async generateAccessToken(user) {
-    const payload = { sub: user.id, email: user.email, isStaff: user.isStaff };
+  async generateAccessToken(user: AccessTokenPayload) {
+    const payload = { id: user.id, email: user.email, role: user.role };
 
     return this.jwtService.signAsync(payload)
   }

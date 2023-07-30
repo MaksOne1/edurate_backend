@@ -1,6 +1,6 @@
 import {
   CanActivate,
-  ExecutionContext,
+  ExecutionContext, ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -8,7 +8,9 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { AUTH } from '../../private.config';
 import { Reflector } from '@nestjs/core';
-import { ONLY_STAFF_KEY } from '../users/only-staff.decorator';
+import { ROLES_KEY } from '../users/roles.decorator';
+import { USER_ROLES } from '../users/entities/user.entity';
+import { AccessTokenPayload } from './auth.types';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -16,34 +18,32 @@ export class AuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const onlyStaff = this.reflector.getAllAndOverride<boolean>(ONLY_STAFF_KEY, [
+    const roles = this.reflector.getAllAndOverride<USER_ROLES[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Не авторизован');
     }
 
-    try {
-      const payload = await this.jwtService.verifyAsync(
-        token,
-        {
-          secret: AUTH.ACCESS_TOKEN_SECRET,
-        },
-      );
-      request['user'] = payload;
+    const encodedUser = await this.jwtService.verifyAsync<AccessTokenPayload>(
+      token,
+      {
+        secret: AUTH.ACCESS_TOKEN_SECRET,
+      },
+    );
 
-      if (onlyStaff) {
-          return payload.isStaff
-      }
-    } catch {
-      throw new UnauthorizedException();
+    request['user'] = encodedUser;
+    const haveAccess = roles.includes(encodedUser.role);
+
+    if (!haveAccess) {
+      throw new ForbiddenException('У вас нет прав на это действие');
     }
+
     return true;
   }
 
